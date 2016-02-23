@@ -27,8 +27,6 @@ public class ProxyThread extends Thread{
 	}
         @Override
         public void run() {
-            Logger logger = Logger.getLogger("MyLog"); 
-            FileHandler fh;
             
             try{
                 DataOutputStream out = new DataOutputStream(connection.getOutputStream());
@@ -39,10 +37,7 @@ public class ProxyThread extends Thread{
                 int fileCount = 0;
                 String urlToCall = "";
                 
-                fh = new FileHandler("C:/Users/Joe/Desktop/Proxy.log");
-                logger.addHandler(fh);
-                SimpleFormatter formatter = new SimpleFormatter();
-                fh.setFormatter(formatter);  
+
                 
                 for(int i = 0;i < 10;i++){
                     if (urlArray[i][1] == null){
@@ -89,8 +84,11 @@ public class ProxyThread extends Thread{
                     System.out.println("Content type: " + conn.getContentType());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     Date date = new Date();
-                    logger.info(dateFormat.format(date)+ " " + ip + " " + urlToCall + " " + conn.getContentLength());
-
+                    //logger.info(dateFormat.format(date)+ " " + ip + " " + urlToCall + " " + conn.getContentLength());
+                    PrintWriter log = null;
+                    log = new PrintWriter(new FileOutputStream(new File("Proxy.log"), true));
+                    log.append(dateFormat.format(date)+ ": " + ip + " " + urlToCall + " " + conn.getContentLength() + "\n");
+                    log.close();
                     boolean cached = false;
                     
                     if(conn.getContentLength() > 0){
@@ -169,10 +167,10 @@ public class ProxyThread extends Thread{
                     connection.close();
                 }
                 
+                
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 }
-
