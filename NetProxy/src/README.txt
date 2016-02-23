@@ -18,9 +18,14 @@ How to run the HTTP Proxy Server
 Configuration
 -----------------
 
-Local Port: 7000
-Max threads: 10
 
+--disable-logging			Logging can be turned off by including this flag.
+
+--logging-location <filepath>		Sets the location for requests to be logged, defaults to current location.
+
+--max-threads <number>			Set a cap on the number of clients that can be connected to the proxy at 						any one time. Default is 10.
+
+--port-number <number>			You can specify any port you would like the server to listen on, default 						is 8080
 
 Credits
 -----------------

@@ -82,13 +82,15 @@ public class ProxyThread extends Thread{
                     System.out.println("Allowed user interaction: " + conn.getAllowUserInteraction());
                     System.out.println("Content encoding: " + conn.getContentEncoding());
                     System.out.println("Content type: " + conn.getContentType());
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    Date date = new Date();
-                    //logger.info(dateFormat.format(date)+ " " + ip + " " + urlToCall + " " + conn.getContentLength());
-                    PrintWriter log = null;
-                    log = new PrintWriter(new FileOutputStream(new File("Proxy.log"), true));
-                    log.append(dateFormat.format(date)+ ": " + ip + " " + urlToCall + " " + conn.getContentLength() + "\n");
-                    log.close();
+                    if(loggingEnabled){
+                    	DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    	Date date = new Date();
+                    	//logger.info(dateFormat.format(date)+ " " + ip + " " + urlToCall + " " + conn.getContentLength());
+                    	PrintWriter log = null;
+                    	log = new PrintWriter(new FileOutputStream(new File(loggingLocation + "Proxy.log"), true));
+                    	log.append(dateFormat.format(date)+ ": " + ip + " " + urlToCall + " " + conn.getContentLength() + "\n");
+                    	log.close();
+                    }
                     boolean cached = false;
                     
                     if(conn.getContentLength() > 0){

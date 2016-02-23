@@ -7,7 +7,7 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		// Interpret command line flags here
-		int portNumber = 80;
+		int portNumber = 8080;
 		int maxThreads = 10;
 		boolean loggingEnabled = true;
 		String loggingLocation = "";

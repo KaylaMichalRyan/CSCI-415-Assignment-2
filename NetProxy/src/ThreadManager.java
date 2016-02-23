@@ -19,7 +19,6 @@ public class ThreadManager {
 	public void run(){
 		System.out.println("NetProxy launched");
 		LinkedList<ProxyThread> threads = new LinkedList<ProxyThread>();
-		int connections = 0;
 		
 		try(ServerSocket listener = new ServerSocket(portNumber);){
 			Runtime.getRuntime().addShutdownHook(new Thread(){public void run(){
