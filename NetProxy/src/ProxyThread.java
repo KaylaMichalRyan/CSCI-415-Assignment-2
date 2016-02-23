@@ -1,5 +1,3 @@
-//Source: http://www.jtmelton.com/2007/11/27/a-simple-multi-threaded-java-http-proxy-server/
-
 
 import java.net.*;
 import java.io.IOException;
@@ -8,16 +6,20 @@ import java.util.*;
 import java.util.logging.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Dictionary;
 
 public class ProxyThread extends Thread{
-    Socket connection;
+    	Socket connection;
 	boolean loggingEnabled;
 	String loggingLocation;
 	private static final int BUFFER_SIZE = 32768;
+        static Hashtable<String,String> cache = new Hashtable<String,String>();
+        static String[][] urlArray = new String[10][2];
+        
         
 	boolean clientConnected;
 	ProxyThread(Socket connection, boolean loggingEnabled, String loggingLocation){
-        super("ProxyThread");
+                super("ProxyThread");
 		this.connection = connection;
 		this.loggingEnabled = loggingEnabled;
 		this.loggingLocation = loggingLocation;
@@ -34,13 +36,20 @@ public class ProxyThread extends Thread{
 
                 String inputLine, outputLine;
                 int cnt = 0;
+                int fileCount = 0;
                 String urlToCall = "";
                 
-                //fh = new FileHandler("C:/Users/Joe/Desktop/Proxy.log");
-                //logger.addHandler(fh);
-                //SimpleFormatter formatter = new SimpleFormatter();
-                //fh.setFormatter(formatter);  
+                fh = new FileHandler("C:/Users/Joe/Desktop/Proxy.log");
+                logger.addHandler(fh);
+                SimpleFormatter formatter = new SimpleFormatter();
+                fh.setFormatter(formatter);  
                 
+                for(int i = 0;i < 10;i++){
+                    if (urlArray[i][1] == null){
+                        fileCount = i;
+                        break;
+                    }
+                }
                 
                 while((inputLine = in.readLine()) != null){
                     try{
@@ -57,42 +66,90 @@ public class ProxyThread extends Thread{
                     }
 
                     cnt++;
-                }
-
+                }        
+                
                 BufferedReader rd = null;
                 try{
                     System.out.println("sending request to real server for url: " + urlToCall);
 
                     URL url = new URL(urlToCall);
                     URLConnection conn = url.openConnection();
+                    URLConnection conn2 = url.openConnection();
                     conn.setDoInput(true);
                     conn.setDoOutput(false);
+                    conn.setUseCaches(true);
+                    String host = url.getHost();
+                    InetAddress address = InetAddress.getByName(host);
+                    String ip = address.getHostAddress();
+                    System.out.println(ip);
                     System.out.println("Type is: " + conn.getContentType());
                     System.out.println("Content length: " + conn.getContentLength());
                     System.out.println("Allowed user interaction: " + conn.getAllowUserInteraction());
                     System.out.println("Content encoding: " + conn.getContentEncoding());
                     System.out.println("Content type: " + conn.getContentType());
-                    //IP address of browser???
-                    //DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                    //Date date = new Date();
-                    //logger.info(dateFormat.format(date)+" " + urlToCall + " " + conn.getContentLength());
-                    InputStream is = null;
-                    HttpURLConnection huc = (HttpURLConnection)conn;
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    Date date = new Date();
+                    logger.info(dateFormat.format(date)+ " " + ip + " " + urlToCall + " " + conn.getContentLength());
+
+                    boolean cached = false;
+                    
                     if(conn.getContentLength() > 0){
-                        try{
-                            is = conn.getInputStream();
-                            rd = new BufferedReader(new InputStreamReader(is));
-                        } catch (IOException ioe) {
-                            System.out.println("IO EXCEPTION: " + ioe);
+                    
+                    for (int i = 0;i < 10;i++)
+                    {
+                        if(urlArray[i][0] != null && urlArray[i][0].equals(urlToCall)){
+                            
+                            System.out.println("THIS IS BEING ACCESSED FROM CACHE:");
+                            System.out.println("");
+                            System.out.println("---------------------------------");
+                            System.out.println("\n\n");
+                            String file = urlArray[i][1];
+                            FileInputStream fstream = new FileInputStream(file);
+                            DataInputStream input = new DataInputStream(fstream);
+                            BufferedReader br = new BufferedReader(new InputStreamReader(input));                       
+                            String fileInput;
+                            while((fileInput = br.readLine()) != null){
+                                out.writeChars(fileInput + "\n");
+                            }
+                            cached = true;
                         }
                     }
-
-                    byte by[] = new byte[BUFFER_SIZE];
-                    int index = is.read(by, 0, BUFFER_SIZE);
-                    while(index != -1){
-                        out.write(by, 0, index);
-                        index = is.read(by, 0, BUFFER_SIZE);
-                    }
+                        while(cached == false){
+                            
+                            InputStream is = null;
+                            PrintWriter fileout = null;
+                                              
+                                System.out.println("WRITING TO FILE \n\n");
+                                is = conn.getInputStream();
+                                rd = new BufferedReader(new InputStreamReader(is));                            
+                                String line;
+                                String fileName = "File" + fileCount + ".txt";
+                                fileout = new PrintWriter(fileName);
+                                while ((line = rd.readLine()) !=null){
+                                    fileout.println(line);
+                                    if (line.equals("</HTML>")){
+                                        fileout.close();
+                                    break;
+                                    }
+                                }
+                                urlArray[fileCount][1] = fileName;
+                                urlArray[fileCount][0] = urlToCall;
+                            
+                            
+                            InputStream is2 = conn2.getInputStream();
+                            byte by[] = new byte[BUFFER_SIZE];
+                            int index = is2.read(by, 0, BUFFER_SIZE);
+                            while(index != -1){
+                                out.write(by, 0, index);
+                                System.out.println(index);
+                                index = is2.read(by, 0, BUFFER_SIZE);
+                            }
+                            
+                          
+                        
+                            
+                        }
+                }
                     out.flush();
                 } catch (Exception e) {
                     System.err.println("Encountered exception: " + e);
@@ -111,9 +168,11 @@ public class ProxyThread extends Thread{
                 if(connection != null){
                     connection.close();
                 }
+                
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 }
+
